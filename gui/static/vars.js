@@ -18,6 +18,7 @@ var vars = ( function() {
         "addRouter": "http://127.0.0.1:8080/api/v1/routers",
         "addInterface": "http://127.0.0.1:8089/link",
         "routers": "http://localhost:8089/manageddevices",
+        "networks": "http://localhost:8089/managednetworks",
         "links": "http://localhost:8089/network",
         "routing": "http://127.0.0.1:8089/routetable",
         "maintenance":"http://127.0.0.1:8089/router",

@@ -30,7 +30,7 @@ aside#canvas{
 
 .mybtn {
     font-family: Arial, Helvetica;
-    background-color: #6ba2dd;
+    background-color: rgb(165, 152, 201);
     border-radius: 4px;
     border: none;
     color: white;
@@ -155,17 +155,29 @@ input[type=text]{
     padding: 10px;
     margin-top: 10px;
 }
+
 input[type=text]:disabled {
     background-color: rgb(163, 152, 201);
 }
-input[type=text]:focus,
-[type=mail]:focus,
-[type=password]:focus,
-[type=tel]:focus,
-[type=date]:focus{
+
+input[type=text]:focus
+{
     background-color: rgb(203, 176, 231);
     color: white;
     outline: none;
+}
+
+label {
+    width: 80%;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+select {
+    width: 80%;
+    border: 1px solid rgb(136, 149, 223);
+    padding: 10px;
+    margin-top: 10px;
 }
 
 input::placeholder {

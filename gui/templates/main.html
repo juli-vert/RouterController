@@ -9,14 +9,13 @@
 			<div>
 			<article id="canvas"></article>
 			<aside id="canvas">
-					<label>Tools</label><br>
+					<label>Actions</label><br>
 					<div class="iconbox" id="toolbox"></div>
-					<br><br><input type='number' id='form_links' placeholder='Rad'/><br>
-					<button class="mybtn" onclick="mycanvas.getSqLinks()">Links</button>
 					<br><br>
-					<label>Square side</label>
-					<input type='number' name='radius' id='side' placeholder='Sid'/><br>
-					<button class="mybtn" onclick="">add</button>
+					<label>Add Network</label>
+					<input type='text' name='netname' id='netname' placeholder='Network Name'/><br>
+					<input type='text' name='cidr' id='cidr' placeholder='CIDR'/><br>
+					<button class="mybtn" onclick="functions.addNetwork()">add</button>
 			</aside>
 			</div>
 	</section>

@@ -1,14 +1,14 @@
 FROM ubuntu:jammy
 RUN apt-get update && apt-get install -y python3 python3-pip
+RUN apt-get install -y net-tools iputils-ping
 RUN apt-get install -y apt-transport-https ca-certificates curl software-properties-common
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
 RUN add-apt-repository -y "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
 RUN apt-cache policy docker-ce && apt-get install -y docker-ce
+RUN sysctl net.ipv4.conf.all.forwarding=1
 WORKDIR /app
-COPY ./backend/docker/controller_requirements.txt .
-RUN pip3 install -r controller_requirements.txt
+COPY router_requirements.txt .
+RUN pip3 install -r router_requirements.txt
 COPY ./backend/graph.py .
-COPY ./backend/controller.py .
-ADD gui/templates templates
-ADD gui/static static
-ENTRYPOINT [ "python3", "controller.py" ]
+COPY ./backend/router.py .
+ENTRYPOINT [ "python3", "router.py" ]

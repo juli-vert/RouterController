@@ -5,6 +5,7 @@ var functions = ( function() {
 	const side = 40;
 	let action = 0;
 	let squares = [];
+	let managed_networks;
 	let menuOn = -1;
 	let container = document.getElementById('svg1');
 	let height_margin = container.getBoundingClientRect().top;
@@ -68,6 +69,18 @@ var functions = ( function() {
 			return response.json()
 	};
 
+	async function rq_with_data(rq_method, url, data) {
+		const response = await fetch(url,
+			{
+				method: rq_method,
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			})
+			return response.json()
+	};
+
 	async function loadEnvironment () {
 		var routers;
 		await rq("GET", vars.getUrls()["routers"]).then(data => {
@@ -100,6 +113,11 @@ var functions = ( function() {
 				addLink(container, linksource, squares[rpos], squares[dpos])
 			}
 		}
+		await rq("GET", vars.getUrls()["networks"]).then(data => {
+			managed_networks = data
+		}).catch(function (error) {
+			console.log(error.message)
+		});
 	}
 
 	const addLink = (elem, coord, src, dst) => {
@@ -224,15 +242,24 @@ var functions = ( function() {
 	}
 
 	const addInterface = (elem) => {
+		let network_options;
+		for (const [key, element] of Object.entries(managed_networks)) {
+			network_options = network_options + `
+			<option value="${key}">${key}:${element}</option>`
+			
+		}
 		const content = `
 		<div class="interface-form" id="interface-form">
 			<form id="infoform" name="infoform" method="POST">
-				<input type="text" name="network" id="form_network" placeholder="Network Name"/>
+				<label for="form_network">Network Name</label> 
+				<select name="network" id="form_network">
+				${network_options}
+				</select>
 				<input type="text" name="ip" id="form_ip" placeholder="IP Address"/>
-				<input type="text" name="mask" id="form_mask" placeholder="Network Mask"/>
 				<input type="text" name="cost" id="form_cost" placeholder="Link cost"/>
 				<input type="submit" name="submit" value="Submit"/>
 			</form>
+			<button class="mybtn" onclick="functions.cleanForm()">cancel</button>
 		</div>
 		`
 		interface_form.innerHTML = content
@@ -290,10 +317,25 @@ var functions = ( function() {
 		interface_form.classList.remove("wide")
 	}
 
+	async function addNetwork() {
+		net_name = document.getElementById('netname').value
+		cidr = document.getElementById('cidr').value
+		json = {
+			"name": net_name,
+			"cidr": cidr
+		}
+		await rq_with_data("POST", vars.getUrls()["networks"], json).then(data => {
+			managed_networks = data
+			console.log(data)
+		}).catch(function (error) {
+			console.log(error.message)
+		});
+	}
+
 	async function post_new_interface () {
 		interface_form_data.network_name = document.getElementById('form_network').value
 		interface_form_data.ip_address = document.getElementById('form_ip').value
-		interface_form_data.network_mask = document.getElementById('form_mask').value
+		interface_form_data.network_mask = (managed_networks[document.getElementById('form_network').value]).split("/")[1]
 		interface_form_data.iface_cost = document.getElementById('form_cost').value
 		await rq("POST", "http://127.0.0.1:8089/link?name="+interface_form_data.router_name+"&ip="+interface_form_data.ip_address+"&mask="+interface_form_data.network_mask+"&cost="+interface_form_data.iface_cost).then(data => {
 			console.log(data)
@@ -302,6 +344,12 @@ var functions = ( function() {
 		});
 		interface_form.innerHTML = ''
 		interface_form.classList.add('hidden_input')
+	}
+
+	const cleanForm = () => {
+		interface_form.innerHTML = ''
+		interface_form.classList.add('hidden_input')
+		menuOn = components.delContextMenu(menuOn)
 	}
 
 	const openConsole = (elem) => {
@@ -392,6 +440,14 @@ var functions = ( function() {
 
 		closeTable: () => {
 			closeTable()
+		},
+
+		addNetwork: () => {
+			addNetwork()
+		},
+
+		cleanForm: () => {
+			cleanForm()
 		}
 
 	};

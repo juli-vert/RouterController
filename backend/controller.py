@@ -43,13 +43,16 @@ class controller(graph):
         nets = os.getenv("NETWORKS")
         for net in nets.split(";"):
             name, ip_range = net.split(":")
-            self.managed_networks[name]=ip_range
+            self.managed_networks[name] = ip_range
 
     def findNetwork(self, ip_ad):
         for net in self.managed_networks.keys():
             if ip_interface(ip_ad).network == ip_network(self.managed_networks[net]):
                 return net
         return ""
+    
+    def addNetwork(self, name, cidr):
+        self.managed_networks[name] = cidr
 
     def getIP(self):
         print(str(self.ipmgmt.ip))
@@ -100,6 +103,7 @@ class controller(graph):
     
     def enableRouter(self, name):
         if name in self.managed_routers.keys():
+            self.managed_routers[name]["connected"] = True
             self.addvertex(graph.vertex(name, self.managed_routers[name]["priority"]))
             reenabled = True
             for iface in self.managed_routers[name]["interfaces"]:
@@ -205,7 +209,9 @@ def getNetworks():
         if sp.stderr:
             logging.info(f"Unable to add a new Network: {data['name']}:{data['cidr']}")
             status = 400
-        return Response(json.dumps(data, indent=4), status=status, mimetype='application/json')
+        else:
+            __g.addNetwork(data['name'], data['cidr'])
+        return Response(json.dumps(__g.managed_networks, indent=4), status=status, mimetype='application/json')
     
 @app.route('/router', methods=['POST'])
 @cross_origin()

@@ -17,3 +17,11 @@ All the network changes are pushed from the controller, even new interfaces on t
 are pushed from the controller. The controller is able to find new adjacencies between 2 routers when new  
 interfaces are created in the same subnet.
 
+## Demo
+
+You can run a 6 routers demo using docker using this docker-compose
+Each new router can be created afterwards running:
+```
+docker run --network=mgmt-network --cap-add=NET_ADMIN -p $PORT:$PORT --ip $MANAGEMENT_IP --name $ROUTER_NAME --env-file ./docker/$ROUTER_NAME.env -v //var/run/docker.sock:/var/run/docker.sock sdnrouter
+```
+
