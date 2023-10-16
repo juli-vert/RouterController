@@ -1,6 +1,8 @@
 # An SDN controller for Routers
 
-🚧 Work in progress
+🚧 Work in progress:
+- A deep refactor is needed  
+- Error control on the GUI is missing  
 
 Routing using the MySPF protocol. A Python Shortest Path First implementation based in a full graph walk-through 
 
@@ -19,7 +21,7 @@ interfaces are created in the same subnet.
 
 ## Demo
 
-You can run a 6 routers demo using docker using this docker-compose
+You can run a 6 routers demo using docker using this docker-compose  
 Each new router can be created afterwards running:
 ```
 docker run --network=mgmt-network --cap-add=NET_ADMIN -p $PORT:$PORT --ip $MANAGEMENT_IP --name $ROUTER_NAME --env-file ./docker/$ROUTER_NAME.env -v //var/run/docker.sock:/var/run/docker.sock sdnrouter
