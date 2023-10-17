@@ -57,8 +57,27 @@ var functions = ( function() {
 		}
 	});
 
+	const showTooltip = (square) => {
+		let tooltip = document.getElementById("tooltip");
+		tooltip.innerHTML = square.name;
+		tooltip.style.display = "block";
+		tooltip.style.left = square.x + 20 + width_margin + 'px';
+		tooltip.style.top = square.y + 20 + height_margin + 'px';
+	}
+
+	const hideTooltip = () => {
+		var tooltip = document.getElementById("tooltip");
+		tooltip.innerHTML = ""
+		tooltip.style.display = "none";
+	}
+
 	container.addEventListener('mousemove', (e) => {
-		relocateSquare(e)
+		if (action === MOVE && selectedElem !== -1) {
+			relocateSquare(e)
+		} else {
+			square_on = squares.findIndex( square => isIn({x: e.clientX-width_margin+left_scroll, y: e.clientY-height_margin+top_scroll}, square));
+			square_on !== -1 ? showTooltip(squares[square_on]) : hideTooltip()
+		}
 	});
 
 	async function rq(rq_method, url, data=null) {
@@ -183,6 +202,7 @@ var functions = ( function() {
 			if (action === SELECT) {
 				const auxMenu = {x: aux.x+width_margin+left_scroll+side/2, y: aux.y+height_margin+top_scroll+side}
 				const epos = squares.findIndex(square => square === aux)
+				hideTooltip()
 				if (menuOn === -1) {
 					menuOn = epos;
 					components.contextMenu(auxMenu, aux.name, aux.state)
@@ -229,7 +249,6 @@ var functions = ( function() {
 	}
 
 	const relocateSquare = (e) => {
-		if (action === MOVE && selectedElem !== -1) {
 			console.log("The position when the click is finished is: ", e.clientX-width_margin, e.clientY-height_margin)
 			document.getElementsByTagName('rect')[selectedElem].setAttribute("x", e.clientX-width_margin+left_scroll)
 			document.getElementsByTagName('rect')[selectedElem].setAttribute("y", e.clientY-height_margin+top_scroll)
@@ -246,7 +265,6 @@ var functions = ( function() {
 			links2move.forEach(link => {
 				link[1] ? opt2(link[0]) : opt1(link[0])
 			});
-		}
 	}
 
 	const addInterface = (elem) => {

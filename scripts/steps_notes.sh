@@ -55,3 +55,10 @@ docker run --network=mgmt-network -p 8089:8089 --ip 192.168.255.100 --name contr
 docker run --network=mgmt-network --cap-add=NET_ADMIN -p 9001:9001 --ip 192.168.255.11 --name demo-r1-1 --env-file ./docker/R1.env -v //var/run/docker.sock:/var/run/docker.sock sdnrouter
 docker rm -f controller demo-r1-1
 docker network rm mgmt-network demo_link1
+
+
+docker run --network=demo_mgmt-network --cap-add=NET_ADMIN -p 9007:9007 --ip 192.168.255.27 --name demo-r7-1 --env-file ./R7.env -v //var/run/docker.sock:/var/run/docker.sock sdnrouter
+
+docker build -t sdncontroller -f Dockerfile.controller .
+docker tag sdncontroller julivert82/routercontroller:sdncontroller
+docker push julivert82/routercontroller:sdncontroller
