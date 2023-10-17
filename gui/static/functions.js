@@ -5,6 +5,7 @@ var functions = ( function() {
 	const side = 40;
 	let action = 0;
 	let squares = [];
+	let managed_routers = {};
 	let managed_networks;
 	let menuOn = -1;
 	let container = document.getElementById('svg1');
@@ -49,36 +50,40 @@ var functions = ( function() {
 	}
 
 	container.addEventListener('mouseup', (e) => {
-		document.getElementsByTagName('rect')[selectedElem].setAttribute("fill","rgb(0, 0, 0)")
-		selectedElem = -1
-		links2move = null
+		if (selectedElem != -1)  {
+			document.getElementsByTagName('rect')[selectedElem].setAttribute("fill","rgb(0, 0, 0)")
+			selectedElem = -1
+			links2move = null
+		}
 	});
 
 	container.addEventListener('mousemove', (e) => {
 		relocateSquare(e)
 	});
 
-	async function rq(rq_method, url) {
-		const response = await fetch(url,
-			{
-				method: rq_method,
-				headers: {
-					'Content-Type': 'application/json'
-				},
-			})
-			return response.json()
-	};
-
-	async function rq_with_data(rq_method, url, data) {
-		const response = await fetch(url,
-			{
+	async function rq(rq_method, url, data=null) {
+		let params;
+		console.log("Starting a request to: "+url)
+		console.log(data)
+		if (data !== null ) {
+			console.log("I don't expect it here")
+			params = {
 				method: rq_method,
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify(data)
-			})
-			return response.json()
+			}
+		} else {
+			params = {
+				method: rq_method,
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			}
+		}
+		const response = await fetch(url, params)
+		return response.json()
 	};
 
 	async function loadEnvironment () {
@@ -89,12 +94,15 @@ var functions = ( function() {
 			console.log(error.message)
 		});
 		for (const [key, element] of Object.entries(routers)) {
-			console.log("adding router: "+key)
-			var rect = container.getBoundingClientRect()
-			posX = Math.floor(Math.random() * (rect.right - rect.left + 1) + rect.left )
-			posY = Math.floor(Math.random() * (rect.bottom - rect.top + 1) + rect.top )
-			const aux = {x: posX-width_margin+left_scroll, y:posY-height_margin+top_scroll, name: key, state: element['connected']}
-			addSquare(container, aux)
+			if (!(key in managed_routers)) {
+				managed_routers[key] = element
+				console.log("adding router: "+key +" with state: "+element['connected'])
+				var rect = container.getBoundingClientRect()
+				posX = Math.floor(Math.random() * (rect.right - rect.left + 1) + rect.left )
+				posY = Math.floor(Math.random() * (rect.bottom - rect.top + 1) + rect.top )
+				const aux = {x: posX-width_margin+left_scroll, y:posY-height_margin+top_scroll, name: key, state: element['connected']}
+				addSquare(container, aux)
+			}
 		}
 		var cables;
 		await rq("GET", vars.getUrls()["links"]).then(data => {
@@ -324,7 +332,7 @@ var functions = ( function() {
 			"name": net_name,
 			"cidr": cidr
 		}
-		await rq_with_data("POST", vars.getUrls()["networks"], json).then(data => {
+		await rq("POST", vars.getUrls()["networks"], json).then(data => {
 			managed_networks = data
 			console.log(data)
 		}).catch(function (error) {
@@ -360,8 +368,7 @@ var functions = ( function() {
 	}
 
 	async function maintenanceMode(elem) {
-		var method = squares[elem].state == true ? "DELETE" : "UPDATE"
-		await rq(method, vars.getUrls()["maintenance"].concat("/",squares[elem].name)).then(data => {
+		await rq("PATCH", vars.getUrls()["maintenance"].concat("/",squares[elem].name)).then(data => {
 			console.log(data)
 		}).catch(function (error) {
 			console.log(error.message)
@@ -448,6 +455,10 @@ var functions = ( function() {
 
 		cleanForm: () => {
 			cleanForm()
+		},
+
+		RefreshEnvironment: () => {
+			loadEnvironment()
 		}
 
 	};

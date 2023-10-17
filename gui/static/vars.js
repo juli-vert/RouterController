@@ -1,7 +1,8 @@
 var vars = ( function() {
     const tools = [
         {id : "b_select", class: "mybtn mybtnicon mybtnselected", onclick: "functions.ActionSelect()", icon: "./static/icons/mouse-pointer-solid.svg", text: "select"},  
-        {id : "b_move", class: "mybtn mybtnicon", onclick: "functions.ActionMove()", icon: "./static/icons/hand-paper-solid.svg", text: "move"}    
+        {id : "b_move", class: "mybtn mybtnicon", onclick: "functions.ActionMove()", icon: "./static/icons/hand-paper-solid.svg", text: "move"},
+        {id : "b_reload", class: "mybtn mybtnicon", onclick: "functions.RefreshEnvironment()", icon: "./static/icons/rotate-solid.svg", text: "refresh"} 
     ]
 
     const mainCanvas = {"class": "mainsvg", "id": "svg1", "width": "1000", "height": "500"}

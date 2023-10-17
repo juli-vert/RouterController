@@ -22,9 +22,9 @@ logging.getLogger("werkzeug").setLevel(logging.INFO)
 app = Flask(__name__)
 
 app.config['sessions'] = {}
-app.config["cmd"] = ["docker", "exec", "-it"]
-app.config["prompt"] = "bash"
-CORS(app, supports_credentials=True, resources={r'/*': {'origins': '*'}})
+app.config['cmd'] = ["docker", "exec", "-it"]
+app.config['prompt'] = "bash"
+CORS(app, supports_credentials=True, resources={r'/*': {'origins': '*'}}, methods=['GET', 'POST', 'UPDATE', 'DELETE', 'PATCH'])
 socketio = SocketIO(app, manage_session=False)
 
 class controller(graph):
@@ -40,9 +40,9 @@ class controller(graph):
         graph.__init__(self)
 
     def loadNetworks(self):
-        nets = os.getenv("NETWORKS")
-        for net in nets.split(";"):
-            name, ip_range = net.split(":")
+        nets = os.getenv('NETWORKS')
+        for net in nets.split(';'):
+            name, ip_range = net.split(':')
             self.managed_networks[name] = ip_range
 
     def findNetwork(self, ip_ad):
@@ -59,8 +59,8 @@ class controller(graph):
         return str(self.ipmgmt.ip)
 
     def _findInterface(self, r, n):
-        int_r = self.managed_routers[r]["interfaces"]
-        int_n = self.managed_routers[n]["interfaces"]
+        int_r = self.managed_routers[r]['interfaces']
+        int_n = self.managed_routers[n]['interfaces']
         for intr in int_r:
             for intn in int_n:
                 if ip_interface(intr[0]).network == ip_interface(intn[0]).network:
@@ -74,10 +74,10 @@ class controller(graph):
             for neig in base_routing[router].keys():
                 if neig != router and base_routing[router][neig][1] != None:
                     iface, gw = self._findInterface(router, base_routing[router][neig][1]) # base_routing[router][neig][1] -> next hop to reach neig
-                    for route in self.managed_routers[neig]["direct_routes"]:
-                        if route not in self.managed_routers[router]["direct_routes"]:
+                    for route in self.managed_routers[neig]['direct_routes']:
+                        if route not in self.managed_routers[router]['direct_routes']:
                             if routes.get(route):
-                                if routes[route]["cost"] < base_routing[router][neig][0]:
+                                if routes[route]['cost'] < base_routing[router][neig][0]:
                                     continue
                             routes[route] = ({"gateway": gw, "via": iface, "cost": base_routing[router][neig][0]})
             self.route_table[router] = routes
@@ -96,17 +96,20 @@ class controller(graph):
         out = self.addvertex(v)
         return out
     
+    def routerState(self, name):
+        return self.managed_routers[name]['connected']
+    
     def disableRouter(self, name):
-        self.managed_routers[name]["connected"] = False
+        self.managed_routers[name]['connected'] = False
         self.delvertex(graph.vertex(name))
         self.updateIpRouting()
     
     def enableRouter(self, name):
         if name in self.managed_routers.keys():
-            self.managed_routers[name]["connected"] = True
-            self.addvertex(graph.vertex(name, self.managed_routers[name]["priority"]))
+            self.managed_routers[name]['connected'] = True
+            self.addvertex(graph.vertex(name, self.managed_routers[name]['priority']))
             reenabled = True
-            for iface in self.managed_routers[name]["interfaces"]:
+            for iface in self.managed_routers[name]['interfaces']:
                 ok, aux = self.registerIface(name, iface[0], iface[1], reenable=True)
                 if not ok:
                     reenabled = False
@@ -145,15 +148,15 @@ class controller(graph):
                     res.append(a)
             return 1, res
 
-@app.route("/")
+@app.route('/')
 def main():
     return redirect(url_for('index'))
 
-@app.route("/console")
+@app.route('/console')
 def console():
     return render_template("console.html")
 
-@app.route("/controller")
+@app.route('/controller')
 def index():
     return render_template("main.html")
 
@@ -207,7 +210,7 @@ def getNetworks():
         cmd = ["docker", "network", "create", "-d", "bridge", f"--subnet={data['cidr']}", "--opt", "icc=true", data['name']]
         sp = subprocess.run(cmd, stderr=subprocess.PIPE)
         if sp.stderr:
-            logging.info(f"Unable to add a new Network: {data['name']}:{data['cidr']}")
+            logging.info(f'Unable to add a new Network: {data["name"]}:{data["cidr"]}')
             status = 400
         else:
             __g.addNetwork(data['name'], data['cidr'])
@@ -223,24 +226,24 @@ def registerRouter():
     rpriority = request.args.get('priority')
     out = __g.registerRouter(rname, rip, rport, rpriority)
     if out:
-        resp = Response('New router added', status=200, mimetype='text/plain')
+        resp = Response(json.dumps({'response': 'New router added'}), status=200, mimetype='application/json')
     else:
-        resp = Response('Failed to add router', status=400, mimetype='text/plain')
+        resp = Response(json.dumps({'response': 'Failed to add router'}), status=400, mimetype='application/json')
     return resp
 
-@app.route('/router/<name>', methods=['UPDATE', 'DELETE'])
+@app.route('/router/<name>', methods=['PATCH'])
 @cross_origin()
 def disableRouter(name):
     global __g
-    if request.method == 'DELETE':
+    if __g.routerState(name):
         __g.disableRouter(name)
         return Response('Router Disabled', status=200, mimetype='text/plain')
-    elif request.method == 'UPDATE':
+    else:
         out = __g.enableRouter(name)
         if out:
-            return Response(f'Router {name} Reenabled', status=200, mimetype='text/plain')
+            return Response(json.dumps({'response': f'Router {name} Reenabled'}), status=200, mimetype='application/json')
         else:
-            return Response(f'Unable to reenable {name}', status=200, mimetype='text/plain')
+            return Response(json.dumps({'response': f'Unable to reenable {name}'}), status=400, mimetype='application/json')
         
 @app.route('/link', methods=['POST'])
 @cross_origin()
@@ -256,7 +259,7 @@ def registerIface():
         out = '{{ "Node" : "{0}", "Interface" : "{1}", "Neighbors" : ["{2}"] }}'.format(rname, '{0}/{1}'.format(ip, mask), '","'.join(neighbors))
         raddr, rport = __g.managed_routers[rname]['ip'].split('/')[0], __g.managed_routers[rname]['port']
         cidr = str(ip_interface(f'{ip}/{mask}').network)
-        params = {f'{ip}': {'network': { "name": __g.findNetwork(f'{ip}/{mask}'), "cidr": f'{cidr}'},'cost': cost}}
+        params = {f'{ip}': {'network': { 'name': __g.findNetwork(f'{ip}/{mask}'), 'cidr': f'{cidr}'},'cost': cost}}
         r = rq.post('http://{0}:{1}/createIface'.format(raddr, rport), json=params)
         if r.status_code == 200:
             resp = Response(json.dumps(json.loads(out), indent=4), status=200, mimetype='application/json')
@@ -265,16 +268,16 @@ def registerIface():
             if not err_routers:
                 resp = Response(json.dumps(json.loads(out), indent=4), status=200, mimetype='application/json')
             else:
-                resp = Response({"Error": f'Link added, but some routers {err_routers} were not able to update their routing tables'}, status=400, mimetype='application/json')
+                resp = Response({'Error': f'Link added, but some routers {err_routers} were not able to update their routing tables'}, status=400, mimetype='application/json')
         else:
-            resp = Response({"Error": 'Failed to apply interface to router'}, status=400, mimetype='application/json')
+            resp = Response({'Error': 'Failed to apply interface to router'}, status=400, mimetype='application/json')
     else:
-        resp = Response({"Error": 'Router does not exist'}, status=404, mimetype='application/json')
+        resp = Response({'Error': 'Router does not exist'}, status=404, mimetype='application/json')
     return resp
 
 def set_winsize(fd, row, col, xpix=0, ypix=0):
-    logging.debug("setting window size with termios")
-    winsize = struct.pack("HHHH", row, col, xpix, ypix)
+    logging.debug('setting window size with termios')
+    winsize = struct.pack('HHHH', row, col, xpix, ypix)
     fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
 
 
@@ -282,77 +285,76 @@ def read_and_forward_pty_output():
     max_read_bytes = 1024 * 20
     while True:
         socketio.sleep(0.01)
-        if app.config["sessions"]:
+        if app.config['sessions']:
             timeout_sec = 0
             sessions_to_be_cleaned = []
-            for session in app.config["sessions"]:
-                (data_ready, _, _) = select.select([app.config["sessions"][session]["fd"]], [], [], timeout_sec)
+            for session in app.config['sessions']:
+                (data_ready, _, _) = select.select([app.config['sessions'][session]['fd']], [], [], timeout_sec)
                 if data_ready:
                     output = ""
                     try:
-                        output = os.read(app.config["sessions"][session]["fd"], max_read_bytes).decode(errors="ignore")
+                        output = os.read(app.config['sessions'][session]['fd'], max_read_bytes).decode(errors='ignore')
                     except OSError as err:
-                        logging.info("Session has been disconnected")
+                        logging.info('Session has been disconnected')
                     finally:
                         if output == "":
                             sessions_to_be_cleaned.append(session)
-                            output = "connection closed"
-                            socketio.emit("pty-output", {"output": output}, namespace="/pty", to=session)
+                            output = 'connection closed'
+                            socketio.emit('pty-output', {'output': output}, namespace='/pty', to=session)
                         else:
-                            socketio.emit("pty-output", {"output": output}, namespace="/pty", to=session)
+                            socketio.emit('pty-output', {'output': output}, namespace='/pty', to=session)
             for ses in sessions_to_be_cleaned:
-                app.config["sessions"].pop(ses)
+                app.config['sessions'].pop(ses)
 
-@socketio.on("pty-input", namespace="/pty")
+@socketio.on('pty-input', namespace='/pty')
 def pty_input(data):
     """write to the child pty. The pty sees this as if you are typing in a real
     terminal.
     """
-    if app.config["sessions"]:
-        if request.sid in app.config["sessions"].keys():
-            logging.debug("received input from browser: %s" % data["input"])
-            os.write(app.config["sessions"][request.sid]["fd"], data["input"].encode())
+    if app.config['sessions']:
+        if request.sid in app.config['sessions'].keys():
+            logging.debug('received input from browser: %s' % data['input'])
+            os.write(app.config['sessions'][request.sid]['fd'], data['input'].encode())
 
 
-@socketio.on("resize", namespace="/pty")
+@socketio.on('resize', namespace='/pty')
 def resize(data):
-    if app.config["sessions"]:
-        logging.debug(f"Resizing window to {data['rows']}x{data['cols']}")
+    if app.config['sessions']:
+        logging.debug(f'Resizing window to {data["rows"]}x{data["cols"]}')
         if request.sid in app.config["sessions"].keys():
-            set_winsize(app.config["sessions"][request.sid]["fd"], data["rows"], data["cols"])
+            set_winsize(app.config['sessions'][request.sid]['fd'], data['rows'], data['cols'])
 
 
-@socketio.on("container", namespace="/pty")
+@socketio.on('container', namespace='/pty')
 def connect(data):
     """new client connected"""
-    logging.info(f"new client connected: {json.dumps(data)} with id: {request.sid}")
-    if len(app.config["sessions"]) > 6:
+    logging.info(f'new client connected: {json.dumps(data)} with id: {request.sid}')
+    if len(app.config['sessions']) > 6:
         # MAX console number is 6
         return
 
     # create child process attached to a pty we can read from and write to
     (child_pid, fd) = pty.fork()
-    logging.info(f"New child process created: {child_pid}")
+    logging.info(f'New child process created: {child_pid}')
     if child_pid == 0:
         # this is the child process fork.
-        spcmd = app.config["cmd"]
+        spcmd = app.config['cmd']
         spcmd.append(data['container'])
         spcmd.append(app.config['prompt'])
         subprocess.run(spcmd)
     else:
         # this is the parent process fork.
-        app.config["sessions"].update({request.sid : {"fd": fd, "chid": child_pid}})
+        app.config['sessions'].update({request.sid : {'fd': fd, 'chid': child_pid}})
         set_winsize(fd, 50, 50)
-        cmd = " ".join(shlex.quote(c) for c in app.config["cmd"])
+        cmd = " ".join(shlex.quote(c) for c in app.config['cmd'])
         cmd = f"{cmd} {data['container']} {app.config['prompt']}"
         socketio.start_background_task(target=read_and_forward_pty_output)
 
-        logging.info("child pid is " + str(child_pid))
+        logging.info(f'child pid is {str(child_pid)}')
         logging.info(
-            f"starting background task with command `{cmd}` to continously read "
-            "and forward pty output to client"
+            f'starting background task with command `{cmd}` to continously read and forward pty output to client'
         )
-        logging.info("task started")
+        logging.info('task started')
 
 def main():
     global __g
@@ -363,13 +365,13 @@ def main():
         elif arg.startswith('port'):
             p = arg.split('=')[1]
     if not h or not p:
-        print("Not all parameters have been met, taking them fron environment")
-        h = os.getenv("CONTROLLER_MGMT_IP")
-        p = os.getenv("CONTROLLER_PORT")
+        logging.info('Not all parameters have been met, taking them fron environment')
+        h = os.getenv('CONTROLLER_MGMT_IP')
+        p = os.getenv('CONTROLLER_PORT')
     if h and p:
         __g = controller(ip=h, p=int(p))
     else:
-        print("Not all parameters have been met, running with defaults")
+        logging.info('Not all parameters have been met, running with defaults')
         __g = controller()
     
     green = "\033[92m"
