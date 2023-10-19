@@ -181,7 +181,7 @@ var functions = ( function() {
 	const addLink = (elem, coord, src, dst, via) => {
 		if (dst.name in links ? src.name in links[dst.name]? true : false : false) {
 			console.log("Link already exists Within: "+src.name+"-"+dst.name)
-			refreshCableColor((links[dst.name][src.name]).cable, naged_networks[via].color)
+			refreshCableColor((links[dst.name][src.name]).cable, managed_networks[via].color)
 			
 		} else {
 			console.log("The link must be created between", src.name, dst.name)

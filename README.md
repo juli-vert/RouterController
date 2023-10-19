@@ -50,9 +50,22 @@ When adding a new interface in a router the controller will check whether that n
 You can manage the routers remotely and try to ping other routers with the console
 ![Console](https://github.com/juli-vert/RouterController/blob/main/img/console.png?raw=true)
 
-### Manage networks
+#### Manage networks
 You can easily add new networks and check the existing one. You can change the cable color as well
 ![Network](https://github.com/juli-vert/RouterController/blob/main/img/networks.png?raw=true)
+
+#### Maitenance mode
+You can run the topology of this example by executing those commands
+
+We can run the console to check the interfaces on **R1**
+![R1 Interfaces](https://github.com/juli-vert/RouterController/blob/main/img/demo-r1-interfaces.png?raw=true)
+
+with the GUI we can check the running forwarding table:
+![R1 Routing Table](https://github.com/juli-vert/RouterController/blob/main/img/demo-r1-routing.png?raw=true)
+
+We can see how it automatically changes when R2 is called to maintenance:
+![R1 Routing changes](https://github.com/juli-vert/RouterController/blob/main/img/demo-r1-with-r2-maintenance.png?raw=true)
+
 
 
 Each new router can be created afterwards running:
