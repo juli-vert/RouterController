@@ -85,7 +85,6 @@ var functions = ( function() {
 		console.log("Starting a request to: "+url)
 		console.log(data)
 		if (data !== null ) {
-			console.log("I don't expect it here")
 			params = {
 				method: rq_method,
 				headers: {
@@ -102,13 +101,26 @@ var functions = ( function() {
 			}
 		}
 		const response = await fetch(url, params)
-		return response.json()
+		let st = response.status
+		let output
+		if (st >= 200 && st < 500) {
+			output = await response.json()
+		} else if (st >= 500) {
+			output = {
+				"response": "Internal server Error"
+			}
+		}
+		rsp = {
+			status: st,
+			data: output
+		}
+		return rsp
 	};
 
 	async function loadEnvironment () {
 		var routers;
 		await rq("GET", vars.getUrls()["routers"]).then(data => {
-			routers = data
+			routers = data.data
 		}).catch(function (error) {
 			console.log(error.message)
 		});
@@ -125,7 +137,7 @@ var functions = ( function() {
 		}
 		var cables;
 		await rq("GET", vars.getUrls()["links"]).then(data => {
-			cables = data
+			cables = data.data
 		}).catch(function (error) {
 			console.log(error.message)
 		});
@@ -141,7 +153,7 @@ var functions = ( function() {
 			}
 		}
 		await rq("GET", vars.getUrls()["networks"]).then(data => {
-			managed_networks = data
+			managed_networks = data.data
 		}).catch(function (error) {
 			console.log(error.message)
 		});
@@ -298,7 +310,7 @@ var functions = ( function() {
 	async function showRouting (elem) {
 		var routes;
 		await rq("GET", vars.getUrls()["routing"].concat("/",squares[elem].name)).then(data => {
-			routes = data
+			routes = data.data
 		}).catch(function (error) {
 			console.log(error.message)
 		});
@@ -351,8 +363,10 @@ var functions = ( function() {
 			"cidr": cidr
 		}
 		await rq("POST", vars.getUrls()["networks"], json).then(data => {
-			managed_networks = data
-			console.log(data)
+			if (data.status !== 200) {
+				alert(data.data['response'])
+			}	
+			managed_networks = data.data
 		}).catch(function (error) {
 			console.log(error.message)
 		});
@@ -364,7 +378,9 @@ var functions = ( function() {
 		interface_form_data.network_mask = (managed_networks[document.getElementById('form_network').value]).split("/")[1]
 		interface_form_data.iface_cost = document.getElementById('form_cost').value
 		await rq("POST", "http://127.0.0.1:8089/link?name="+interface_form_data.router_name+"&ip="+interface_form_data.ip_address+"&mask="+interface_form_data.network_mask+"&cost="+interface_form_data.iface_cost).then(data => {
-			console.log(data)
+			if (data.status !== 200) {
+				alert(data.data['response'])
+			}	
 		}).catch(function (error) {
 			console.log(error.message)
 		});

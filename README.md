@@ -2,7 +2,8 @@
 
 🚧 Work in progress:
 - A deep refactor is needed  
-- Error control on the GUI is missing  
+- Watcher. Add healtcheck endpoints to routers and run a job healtchecking all the endpoints to disable and recalculate the routing when an  
+unexpected network topology change is detected.  
 
 Routing using the MySPF protocol. A Python Shortest Path First implementation based in a full graph walk-through 
 

@@ -206,15 +206,13 @@ def getNetworks():
         return resp
     elif request.method == 'POST':
         data = request.get_json()
-        status = 200
         cmd = ["docker", "network", "create", "-d", "bridge", f"--subnet={data['cidr']}", "--opt", "icc=true", data['name']]
         sp = subprocess.run(cmd, stderr=subprocess.PIPE)
         if sp.stderr:
             logging.info(f'Unable to add a new Network: {data["name"]}:{data["cidr"]}')
-            status = 400
-        else:
-            __g.addNetwork(data['name'], data['cidr'])
-        return Response(json.dumps(__g.managed_networks, indent=4), status=status, mimetype='application/json')
+            return Response(json.dumps({'response': f'Unable to add the network {data["name"]}:{data["cidr"]} due {sp.stderr}'}), status=400, mimetype='application/json')
+        __g.addNetwork(data['name'], data['cidr'])
+        return Response(json.dumps(__g.managed_networks, indent=4), status=200, mimetype='application/json')
     
 @app.route('/router', methods=['POST'])
 @cross_origin()
@@ -268,11 +266,11 @@ def registerIface():
             if not err_routers:
                 resp = Response(json.dumps(json.loads(out), indent=4), status=200, mimetype='application/json')
             else:
-                resp = Response({'Error': f'Link added, but some routers {err_routers} were not able to update their routing tables'}, status=400, mimetype='application/json')
+                resp = Response(json.dumps({'response': f'Link added, but some routers {err_routers} were not able to update their routing tables'}), status=400, mimetype='application/json')
         else:
-            resp = Response({'Error': 'Failed to apply interface to router'}, status=400, mimetype='application/json')
+            resp = Response(json.dumps({'response': 'Failed to apply interface to router'}), status=400, mimetype='application/json')
     else:
-        resp = Response({'Error': 'Router does not exist'}, status=404, mimetype='application/json')
+        resp = Response(json.dumps({'response': 'Router does not exist'}), status=404, mimetype='application/json')
     return resp
 
 def set_winsize(fd, row, col, xpix=0, ypix=0):

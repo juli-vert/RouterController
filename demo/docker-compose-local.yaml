@@ -1,0 +1,195 @@
+version: "3.9"
+services:
+  controller:
+    image: sdncontroller:latest
+    ports:
+      - 8089:8089
+    env_file:
+      - ./controller.env
+    environment:
+      - NETWORKS=demo_link1:192.168.101.0/24;demo_link2:192.168.102.0/24;demo_link3:192.168.103.0/24;demo_link4:192.168.104.0/24;demo_net1:192.168.201.0/24;demo_net4:192.168.204.0/24
+    networks:
+      mgmt-network:
+        ipv4_address: 192.168.255.100
+    volumes:
+     - //var/run/docker.sock:/var/run/docker.sock
+  r1:
+    image: sdnrouter:latest
+    ports:
+      - 9001:9001
+    depends_on: 
+      - controller
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - ./R1.env
+    networks:
+      mgmt-network:
+        ipv4_address: 192.168.255.11
+    volumes:
+     - //var/run/docker.sock:/var/run/docker.sock
+  r2:
+    image: sdnrouter:latest
+    ports: 
+      - 9002:9002
+    depends_on: 
+      - controller
+      - r1
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - ./R2.env
+    networks:
+      mgmt-network:
+        ipv4_address: 192.168.255.12
+    volumes:
+     - //var/run/docker.sock:/var/run/docker.sock
+  r3:
+    image: sdnrouter:latest
+    ports: 
+      - 9003:9003
+    depends_on:
+      - controller
+      - r1
+      - r2
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - ./R3.env
+    networks:
+      mgmt-network:
+        ipv4_address: 192.168.255.13
+    volumes:
+     - //var/run/docker.sock:/var/run/docker.sock
+  r4:
+    image: sdnrouter:latest
+    ports: 
+      - 9004:9004
+    depends_on:
+      - controller
+      - r1
+      - r2
+      - r3
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - ./R4.env
+    networks:
+      mgmt-network:
+        ipv4_address: 192.168.255.14
+    volumes:
+     - //var/run/docker.sock:/var/run/docker.sock
+  r5:
+    image: sdnrouter:latest
+    ports: 
+      - 9005:9005
+    depends_on:
+      - controller
+      - r1
+      - r2
+      - r3
+      - r4
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - ./R5.env
+    networks:
+      mgmt-network:
+        ipv4_address: 192.168.255.15
+    volumes:
+     - //var/run/docker.sock:/var/run/docker.sock
+  r6:
+    image: sdnrouter:latest
+    ports: 
+      - 9006:9006
+    depends_on:
+      - controller
+      - r1
+      - r2
+      - r3
+      - r4
+      - r5
+    cap_add:
+      - NET_ADMIN
+    env_file:
+      - ./R6.env
+    networks:
+      mgmt-network:
+        ipv4_address: 192.168.255.16
+    volumes:
+     - //var/run/docker.sock:/var/run/docker.sock
+  networker:
+    image: busybox
+    networks:
+      link1:
+        ipv4_address: 192.168.101.254
+      link2:
+        ipv4_address: 192.168.102.254
+      link3:
+        ipv4_address: 192.168.103.254
+      link4:
+        ipv4_address: 192.168.104.254
+      net1:
+        ipv4_address: 192.168.201.254
+      net4:
+        ipv4_address: 192.168.204.254
+
+networks:
+  mgmt-network:
+    driver: bridge
+    ipam: 
+      driver: default
+      config:
+        - subnet: 192.168.255.0/24
+          gateway: 192.168.255.254
+  link1:
+    driver: bridge
+    ipam: 
+      driver: default
+      config:
+        - subnet: 192.168.101.0/24
+    driver_opts:
+      icc: "true"
+  link2:
+    driver: bridge
+    ipam: 
+      driver: default
+      config:
+        - subnet: 192.168.102.0/24
+    driver_opts:
+      icc: "true"
+  link3:
+    driver: bridge
+    ipam: 
+      driver: default
+      config:
+        - subnet: 192.168.103.0/24
+    driver_opts:
+      icc: "true"
+  link4:
+    driver: bridge
+    ipam: 
+      driver: default
+      config:
+        - subnet: 192.168.104.0/24
+    driver_opts:
+      icc: "true"
+  net1:
+    driver: bridge
+    ipam: 
+      driver: default
+      config:
+        - subnet: 192.168.201.0/24
+    driver_opts:
+      icc: "true"
+  net4:
+    driver: bridge
+    ipam: 
+      driver: default
+      config:
+        - subnet: 192.168.204.0/24
+    driver_opts:
+      icc: "true"
+
+
+
