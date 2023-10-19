@@ -25,12 +25,12 @@ interfaces are created in the same subnet.
 You can run a 6 routers demo using docker using [this docker-compose](demo/docker-compose.yaml)  
 Once all the containers are up and running you can access the main GUI by running the [controller](http://localhost:8089/controller)  
 The main interface will show up containing 6 routers randomly placed on the main section as shown below  
-![Main Window](https://github.com/juli-vert/RouterController/blob/main/main.png?raw=true)
+![Main Window](https://github.com/juli-vert/RouterController/blob/main/img/main.png?raw=true)
 
 ### Actions
 #### Move the routers
 You can place the routers alongside the main section as your preference
-![Action Move](https://github.com/juli-vert/RouterController/blob/main/move.png?raw=true)
+![Action Move](https://github.com/juli-vert/RouterController/blob/main/img/move.png?raw=true)
 
 #### Context Menu
 With the **select** action activated and clicking on each router the **context menu** will be displayed. There are several options:
@@ -39,20 +39,20 @@ With the **select** action activated and clicking on each router the **context m
 - enter maintenance mode
 - open console
 - close the menu
-![Context menu](https://github.com/juli-vert/RouterController/blob/main/context.png?raw=true)
+![Context menu](https://github.com/juli-vert/RouterController/blob/main/img/context.png?raw=true)
 
 #### Add interfaces and get links
 When adding a new interface in a router the controller will check whether that new interface creates a new link with the existing router's interfaces.  
-![Create an Interface](https://github.com/juli-vert/RouterController/blob/main/interface.png?raw=true)
-![Link created](https://github.com/juli-vert/RouterController/blob/main/link.png?raw=true)
+![Create an Interface](https://github.com/juli-vert/RouterController/blob/main/img/interface.png?raw=true)
+![Link created](https://github.com/juli-vert/RouterController/blob/main/img/link.png?raw=true)
 
 #### Opening an interactive console
 You can manage the routers remotely and try to ping other routers with the console
-![Console](https://github.com/juli-vert/RouterController/blob/main/console.png?raw=true)
+![Console](https://github.com/juli-vert/RouterController/blob/main/img/console.png?raw=true)
 
 ### Manage networks
 You can easily add new networks and check the existing one. You can change the cable color as well
-![Network](https://github.com/juli-vert/RouterController/blob/main/networks.png?raw=true)
+![Network](https://github.com/juli-vert/RouterController/blob/main/img/networks.png?raw=true)
 
 
 Each new router can be created afterwards running:
