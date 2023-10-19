@@ -62,3 +62,6 @@ docker run --network=demo_mgmt-network --cap-add=NET_ADMIN -p 9007:9007 --ip 192
 docker build -t sdncontroller -f Dockerfile.controller .
 docker tag sdncontroller julivert82/routercontroller:sdncontroller
 docker push julivert82/routercontroller:sdncontroller
+
+docker tag sdnrouter julivert82/routercontroller:sdnrouter
+docker push julivert82/routercontroller:sdnrouter

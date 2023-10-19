@@ -6,7 +6,7 @@ var functions = ( function() {
 	let action = 0;
 	let squares = [];
 	let managed_routers = {};
-	let managed_networks;
+	let managed_networks = {};
 	let menuOn = -1;
 	let container = document.getElementById('svg1');
 	let height_margin = container.getBoundingClientRect().top;
@@ -120,21 +120,40 @@ var functions = ( function() {
 	async function loadEnvironment () {
 		var routers;
 		await rq("GET", vars.getUrls()["routers"]).then(data => {
-			routers = data.data
+			for (const [key, element] of Object.entries(data.data)) {
+				if (!(key in managed_routers)) {
+					managed_routers[key] = element
+					console.log("adding router: "+key +" with state: "+element['connected'])
+					var rect = container.getBoundingClientRect()
+					posX = Math.floor(Math.random() * (rect.right - rect.left + 1) + rect.left )
+					posY = Math.floor(Math.random() * (rect.bottom - rect.top + 1) + rect.top )
+					const aux = {x: posX-width_margin+left_scroll, y:posY-height_margin+top_scroll, name: key, state: element['connected']}
+					addSquare(container, aux)
+				}
+			}
 		}).catch(function (error) {
 			console.log(error.message)
 		});
-		for (const [key, element] of Object.entries(routers)) {
-			if (!(key in managed_routers)) {
-				managed_routers[key] = element
-				console.log("adding router: "+key +" with state: "+element['connected'])
-				var rect = container.getBoundingClientRect()
-				posX = Math.floor(Math.random() * (rect.right - rect.left + 1) + rect.left )
-				posY = Math.floor(Math.random() * (rect.bottom - rect.top + 1) + rect.top )
-				const aux = {x: posX-width_margin+left_scroll, y:posY-height_margin+top_scroll, name: key, state: element['connected']}
-				addSquare(container, aux)
-			}
+		
+		const genRandomColor = () => {
+			let c = [...Array(6)].map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+			return "#"+c
 		}
+		await rq("GET", vars.getUrls()["networks"]).then(data => {
+			for (const [name, cidr] of Object.entries(data.data)) {
+				if (!(name in managed_networks)) {
+					let aux = {
+						cidr: cidr,
+						color: genRandomColor()
+					}
+					managed_networks[name] = aux
+				}
+			}
+			console.log(managed_networks)
+		}).catch(function (error) {
+			console.log(error.message)
+		});
+		
 		var cables;
 		await rq("GET", vars.getUrls()["links"]).then(data => {
 			cables = data.data
@@ -143,25 +162,27 @@ var functions = ( function() {
 		});
 		for (const [source_router, cable_data] of Object.entries(cables)) {
 			const rpos = squares.findIndex(square => square.name === source_router)
-			for (const [dest_router, cost] of Object.entries(cable_data["neighbors"])) {
+			for (const [dest_router, extra] of Object.entries(cable_data["neighbors"])) {
 				const dpos = squares.findIndex(square => square.name === dest_router)
 				linksource.x1 = squares[rpos]["x"]+side/2
 				linksource.y1 = squares[rpos]["y"]+side/2
 				linksource.x2 = squares[dpos]["x"]+side/2
 				linksource.y2 = squares[dpos]["y"]+side/2
-				addLink(container, linksource, squares[rpos], squares[dpos])
+				addLink(container, linksource, squares[rpos], squares[dpos], extra["via"])
 			}
 		}
-		await rq("GET", vars.getUrls()["networks"]).then(data => {
-			managed_networks = data.data
-		}).catch(function (error) {
-			console.log(error.message)
-		});
 	}
 
-	const addLink = (elem, coord, src, dst) => {
+	const refreshCableColor = (cable, color) => {
+		cable.removeAttribute("stroke")
+		cable.setAttribute("stroke", color)
+	}
+
+	const addLink = (elem, coord, src, dst, via) => {
 		if (dst.name in links ? src.name in links[dst.name]? true : false : false) {
-			console.log("Link already exists", src.name, dst.name)
+			console.log("Link already exists Within: "+src.name+"-"+dst.name)
+			refreshCableColor((links[dst.name][src.name]).cable, naged_networks[via].color)
+			
 		} else {
 			console.log("The link must be created between", src.name, dst.name)
 			let newlink = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -169,7 +190,9 @@ var functions = ( function() {
 			newlink.setAttribute("y1", coord.y1)
 			newlink.setAttribute("x2", coord.x2)
 			newlink.setAttribute("y2", coord.y2)
-			newlink.setAttribute("stroke", "red")
+			console.log("Color to apply: "+managed_networks[via].color+" from: "+via)
+			newlink.setAttribute("stroke", managed_networks[via].color)
+			newlink.setAttribute("stroke-width", "3")
 			elem.appendChild(newlink)
 			let nodes = [src, dst]
 			src["links"].push([newlink, 0])
@@ -181,16 +204,16 @@ var functions = ( function() {
 				return nodes
 			}
 			if (src.name in links) {
-				links[src.name][dst.name] = true
+				links[src.name][dst.name] = {cable: newlink, net: via}
 			} else {
 				links[src.name] = {}
-				links[src.name][dst.name] = true
+				links[src.name][dst.name] = {cable: newlink, net: via}
 			}
 			if (dst.name in links) {
-				links[dst.name][src.name] = true
+				links[dst.name][src.name] = {cable: newlink, net: via}
 			} else {
 				links[dst.name] = {}
-				links[dst.name][src.name] = true
+				links[dst.name][src.name] = {cable: newlink, net: via}
 			}
 			console.log(links)
 		}
@@ -210,6 +233,8 @@ var functions = ( function() {
 		} else {
 			newSquare.setAttribute("fill","rgb(240,128,128)")
 		}
+		newSquare.setAttribute("stroke", "grey")
+		newSquare.setAttribute("stroke-width", "3")
 		newSquare.addEventListener('click', (e) => {
 			if (action === SELECT) {
 				const auxMenu = {x: aux.x+width_margin+left_scroll+side/2, y: aux.y+height_margin+top_scroll+side}
@@ -283,7 +308,7 @@ var functions = ( function() {
 		let network_options;
 		for (const [key, element] of Object.entries(managed_networks)) {
 			network_options = network_options + `
-			<option value="${key}">${key}:${element}</option>`
+			<option value="${key}">${key}:${element.cidr}</option>`
 			
 		}
 		const content = `
@@ -366,7 +391,15 @@ var functions = ( function() {
 			if (data.status !== 200) {
 				alert(data.data['response'])
 			}	
-			managed_networks = data.data
+			for (const [name, cidr] of Object.entries(data.data)) {
+				if (!(name in managed_networks)) {
+					let aux = {
+						cidr: cidr,
+						color: genRandomColor()
+					}
+					managed_networks[name] = aux
+				}
+			}
 		}).catch(function (error) {
 			console.log(error.message)
 		});
@@ -375,7 +408,7 @@ var functions = ( function() {
 	async function post_new_interface () {
 		interface_form_data.network_name = document.getElementById('form_network').value
 		interface_form_data.ip_address = document.getElementById('form_ip').value
-		interface_form_data.network_mask = (managed_networks[document.getElementById('form_network').value]).split("/")[1]
+		interface_form_data.network_mask = (managed_networks[document.getElementById('form_network').value].cidr).split("/")[1]
 		interface_form_data.iface_cost = document.getElementById('form_cost').value
 		await rq("POST", "http://127.0.0.1:8089/link?name="+interface_form_data.router_name+"&ip="+interface_form_data.ip_address+"&mask="+interface_form_data.network_mask+"&cost="+interface_form_data.iface_cost).then(data => {
 			if (data.status !== 200) {
@@ -386,6 +419,7 @@ var functions = ( function() {
 		});
 		interface_form.innerHTML = ''
 		interface_form.classList.add('hidden_input')
+		loadEnvironment()
 	}
 
 	const cleanForm = () => {
@@ -410,6 +444,53 @@ var functions = ( function() {
 		squares[elem].state == true ? document.getElementsByTagName('rect')[elem].setAttribute("fill","rgb(240,128,128)") : document.getElementsByTagName('rect')[elem].setAttribute("fill","rgb(0, 0, 0)")
 		squares[elem].state == true ? squares[elem].state = false : squares[elem].state = true
 		menuOn = components.delContextMenu(menuOn)
+	}
+
+	showNetworks = () => {
+		console.log(managed_networks)
+		var table_lines = ""
+		for (const [key, element] of Object.entries(managed_networks)) {
+				var table_line = `
+				<tr>
+				<td>${key}</td>
+				<td>${element["cidr"]}</td>
+				<td><input type="color" value="${element.color}" class="colorpicker" id="color-${key}"></td>
+				</tr>
+				`
+				table_lines = table_lines + table_line
+		}
+		const content = `
+		<table class="tab1" id="tab1">
+              <thead>
+                  <tr>
+                  <th>Network</th>
+                  <th>CIDR</th>
+                  <th>Cable Color</th>
+                  </tr>
+              </thead>
+              <tbody>
+				${table_lines}
+              </tbody>
+        </table>
+		<button type="button" onclick="functions.closeTable()">Close</button>
+		`
+		interface_form.innerHTML = content
+		interface_form.classList.remove('hidden_input')
+		interface_form.classList.add("wide")
+		const pickers = document.getElementsByClassName("colorpicker")
+		Array.from(pickers).forEach(function(element) {
+			element.addEventListener('input', (e)=>{
+				net = (element.id).split("-")[1]
+				managed_networks[net].color = element.value
+				for (const [key, body] of Object.entries(links)) {
+					for (const [key2, body2] of Object.entries(body)) {
+						if (body2.net === net) {
+							refreshCableColor((links[key][key2]).cable, element.value)
+						}
+					}
+				}
+			}, false);
+		});
 	}
 
 	return {
@@ -493,6 +574,10 @@ var functions = ( function() {
 
 		RefreshEnvironment: () => {
 			loadEnvironment()
+		},
+
+		showNetworks: () => {
+			showNetworks()
 		}
 
 	};

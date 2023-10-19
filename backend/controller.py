@@ -142,7 +142,8 @@ class controller(graph):
                         if ip_interface(mriface[0]).network == iface.network:
                             neighbors.append(node)
                             cost2 = int(mriface[1])
-                            out.append(self.addedge(graph.vertex(name), graph.vertex(node), cost2, cost))
+                            via = self.findNetwork(ip)
+                            out.append(self.addedge(graph.vertex(name), graph.vertex(node), cost, cost2, via))
             for a, b in zip(neighbors, out):
                 if b == 1:
                     res.append(a)

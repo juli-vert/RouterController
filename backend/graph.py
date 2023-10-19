@@ -38,10 +38,10 @@ class graph:
 
     # to be changed. Currently it's bidirectional with equal cost, it must
     # be defined by direction
-    def addedge(self, vs, vd, cost1, cost2):
+    def addedge(self, vs, vd, cost1, cost2, via):
         if vs != vd:
-            self.g[vs.name].addneighbor(self.g[vd.name], cost1)
-            self.g[vd.name].addneighbor(self.g[vs.name], cost2)
+            self.g[vs.name].addneighbor(self.g[vd.name], cost1, via)
+            self.g[vd.name].addneighbor(self.g[vs.name], cost2, via)
             self.printgraph()
             print('!--- New adjacency found: Updating routing tables ---!')
             self.fullroute = self.fullDijkstra()
@@ -81,11 +81,11 @@ class graph:
                 p2.append(p)
                 for edge in edges:
                     if b == edge: #direct path
-                        if pathcost == -1 or (pathcost > edges[b] + currentcost and edges[b] !=-1):
-                            pathcost = edges[b] + currentcost
+                        if pathcost == -1 or (pathcost > edges[b]["cost"] + currentcost and edges[b]["cost"] !=-1):
+                            pathcost = edges[b]["cost"] + currentcost
                             nexthop = b
                     else: #no direct path: we need to jump to the next
-                        cost, nh = self.__partialDijkstra(edge, p2, b, currentcost+edges[edge])
+                        cost, nh = self.__partialDijkstra(edge, p2, b, currentcost+edges[edge]["cost"])
                         if (pathcost == -1 and cost != -1) or (pathcost > cost and cost !=-1):
                             pathcost = cost
                             nexthop = edge
@@ -105,12 +105,12 @@ class graph:
                 nexthop = None
                 for edge in edges:
                     if b == edge: #direct path
-                        if pathcost == -1 or (pathcost > edges[b] and edges[b] !=-1):
-                            pathcost = edges[b]
+                        if pathcost == -1 or (pathcost > edges[b]["cost"] and edges[b]["cost"] !=-1):
+                            pathcost = edges[b]["cost"]
                             nexthop = b
                     else: #no direct path: we need to jump to the next neighbor
                         path = [a]
-                        cost, nh = self.__partialDijkstra(edge, path, b, edges[edge])
+                        cost, nh = self.__partialDijkstra(edge, path, b, edges[edge]["cost"])
                         if pathcost == -1 or (pathcost > cost and cost !=-1):
                             pathcost = cost
                             nexthop = edge
@@ -143,8 +143,8 @@ class graph:
             self.priority = p
             self.rtable = None
 
-        def addneighbor(self, n, cost):
-            self.neighbors.update({n.name:cost})
+        def addneighbor(self, n, cost, via):
+            self.neighbors.update({n.name:{"cost": cost, "via": via}})
 
         def delneighbor(self, n):
             if n.name in self.neighbors.keys():
