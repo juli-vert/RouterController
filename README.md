@@ -55,7 +55,7 @@ You can easily add new networks and check the existing one. You can change the c
 ![Network](https://github.com/juli-vert/RouterController/blob/main/img/networks.png?raw=true)
 
 #### Maitenance mode
-You can run the topology of this example by executing those commands
+You can run the topology of this example by executing [those commands](https://github.com/juli-vert/RouterController/blob/main/scripts/steps_notes.sh#L27-L40)
 
 We can run the console to check the interfaces on **R1**
 ![R1 Interfaces](https://github.com/juli-vert/RouterController/blob/main/img/demo-r1-interfaces.png?raw=true)
@@ -66,10 +66,10 @@ with the GUI we can check the running forwarding table:
 We can see how it automatically changes when R2 is called to maintenance:
 ![R1 Routing changes](https://github.com/juli-vert/RouterController/blob/main/img/demo-r1-with-r2-maintenance.png?raw=true)
 
-
-
-Each new router can be created afterwards running:
+#### Adding new routers
+If we want to simulate that a new router has been connected to the network we can create it afterwards running:
 ```
 docker run --network=mgmt-network --cap-add=NET_ADMIN -p $PORT:$PORT --ip $MANAGEMENT_IP --name $ROUTER_NAME --env-file ./docker/$ROUTER_NAME.env -v //var/run/docker.sock:/var/run/docker.sock sdnrouter
 ```
+This requires to use the **REFRESH** button on the top-left menu.
 
