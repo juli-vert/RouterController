@@ -1,124 +1,204 @@
 version: "3.9"
-services:
-  controller:
-    image: julivert82/routercontroller:sdncontroller
-    ports:
-      - 8089:8089
-    env_file:
-      - ./controller.env
-    environment:
-      - NETWORKS=demo_link1:192.168.101.0/24;demo_link2:192.168.102.0/24;demo_link3:192.168.103.0/24;demo_link4:192.168.104.0/24;demo_net1:192.168.201.0/24;demo_net4:192.168.204.0/24
-    networks:
+x-controller: &controller
+  container_name: controller
+  image: julivert82/routercontroller:sdncontroller
+  ports:
+    - 8089:8089
+  env_file:
+    - ./controller.env
+  environment:
+    - NETWORKS=link1:192.168.101.0/24;link2:192.168.102.0/24;link3:192.168.103.0/24;link4:192.168.104.0/24;net1:192.168.201.0/24;net4:192.168.204.0/24
+  networks:
       mgmt-network:
         ipv4_address: 192.168.255.100
+  cap_add:
+      - NET_ADMIN
+x-r1: &r1
+  container_name: r1
+  image: julivert82/routercontroller:sdnrouter
+  ports:
+    - 9001:9001
+  depends_on: 
+    - controller
+  env_file:
+    - ./R1.env
+  networks:
+    mgmt-network:
+      ipv4_address: 192.168.255.11
+  cap_add:
+      - NET_ADMIN
+x-r2: &r2
+  container_name: r2
+  image: julivert82/routercontroller:sdnrouter
+  ports: 
+    - 9002:9002
+  depends_on: 
+    - controller
+    - r1
+  env_file:
+    - ./R2.env
+  networks:
+    mgmt-network:
+      ipv4_address: 192.168.255.12
+  cap_add:
+      - NET_ADMIN
+x-r3: &r3
+  container_name: r3
+  image: julivert82/routercontroller:sdnrouter
+  ports: 
+    - 9003:9003
+  depends_on:
+    - controller
+    - r1
+    - r2
+  env_file:
+    - ./R3.env
+  networks:
+    mgmt-network:
+      ipv4_address: 192.168.255.13
+  cap_add:
+      - NET_ADMIN
+x-r4: &r4
+  container_name: r4
+  image: julivert82/routercontroller:sdnrouter
+  ports: 
+    - 9004:9004
+  depends_on:
+    - controller
+    - r1
+    - r2
+    - r3
+  env_file:
+    - ./R4.env
+  networks:
+    mgmt-network:
+      ipv4_address: 192.168.255.14
+  cap_add:
+      - NET_ADMIN
+x-r5: &r5
+  container_name: r5
+  image: julivert82/routercontroller:sdnrouter
+  ports: 
+    - 9005:9005
+  depends_on:
+    - controller
+    - r1
+    - r2
+    - r3
+    - r4
+  env_file:
+    - ./R5.env
+  networks:
+    mgmt-network:
+      ipv4_address: 192.168.255.15
+  cap_add:
+      - NET_ADMIN
+x-r6: &r6
+  container_name: r6
+  image: julivert82/routercontroller:sdnrouter
+  ports: 
+    - 9006:9006
+  depends_on:
+    - controller
+    - r1
+    - r2
+    - r3
+    - r4
+    - r5
+  env_file:
+    - ./R6.env
+  networks:
+    mgmt-network:
+      ipv4_address: 192.168.255.16
+  cap_add:
+      - NET_ADMIN
+services:
+  controller:
+    <<: *controller
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - win
+  controller_u:
+    <<: *controller
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - unix
   r1:
-    image: julivert82/routercontroller:sdnrouter
-    ports:
-      - 9001:9001
-    depends_on: 
-      - controller
-    cap_add:
-      - NET_ADMIN
-    env_file:
-      - ./R1.env
-    networks:
-      mgmt-network:
-        ipv4_address: 192.168.255.11
+    <<: *r1
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - win
+  r1_u:
+    <<: *r1
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - unix
   r2:
-    image: julivert82/routercontroller:sdnrouter
-    ports: 
-      - 9002:9002
-    depends_on: 
-      - controller
-      - r1
-    cap_add:
-      - NET_ADMIN
-    env_file:
-      - ./R2.env
-    networks:
-      mgmt-network:
-        ipv4_address: 192.168.255.12
+    <<: *r2
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - win
+  r2_u:
+    <<: *r2
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - unix
   r3:
-    image: julivert82/routercontroller:sdnrouter
-    ports: 
-      - 9003:9003
-    depends_on:
-      - controller
-      - r1
-      - r2
-    cap_add:
-      - NET_ADMIN
-    env_file:
-      - ./R3.env
-    networks:
-      mgmt-network:
-        ipv4_address: 192.168.255.13
+    <<: *r3
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - win
+  r3_u:
+    <<: *r3
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - unix
   r4:
-    image: julivert82/routercontroller:sdnrouter
-    ports: 
-      - 9004:9004
-    depends_on:
-      - controller
-      - r1
-      - r2
-      - r3
-    cap_add:
-      - NET_ADMIN
-    env_file:
-      - ./R4.env
-    networks:
-      mgmt-network:
-        ipv4_address: 192.168.255.14
+    <<: *r4
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - win
+  r4_u:
+    <<: *r4
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - unix
   r5:
-    image: julivert82/routercontroller:sdnrouter
-    ports: 
-      - 9005:9005
-    depends_on:
-      - controller
-      - r1
-      - r2
-      - r3
-      - r4
-    cap_add:
-      - NET_ADMIN
-    env_file:
-      - ./R5.env
-    networks:
-      mgmt-network:
-        ipv4_address: 192.168.255.15
+    <<: *r5
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - win
+  r5_u:
+    <<: *r5
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - unix
   r6:
-    image: julivert82/routercontroller:sdnrouter
-    ports: 
-      - 9006:9006
-    depends_on:
-      - controller
-      - r1
-      - r2
-      - r3
-      - r4
-      - r5
-    cap_add:
-      - NET_ADMIN
-    env_file:
-      - ./R6.env
-    networks:
-      mgmt-network:
-        ipv4_address: 192.168.255.16
+    <<: *r6
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - win
+  r6_u:
+    <<: *r6
+    volumes:
+     - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - unix
   networker:
+    container_name: networker
     image: busybox
     networks:
       link1:
@@ -136,6 +216,7 @@ services:
 
 networks:
   mgmt-network:
+    name: mgmt-network
     driver: bridge
     ipam: 
       driver: default
@@ -143,6 +224,7 @@ networks:
         - subnet: 192.168.255.0/24
           gateway: 192.168.255.254
   link1:
+    name: link1
     driver: bridge
     ipam: 
       driver: default
@@ -151,6 +233,7 @@ networks:
     driver_opts:
       icc: "true"
   link2:
+    name: link2
     driver: bridge
     ipam: 
       driver: default
@@ -159,6 +242,7 @@ networks:
     driver_opts:
       icc: "true"
   link3:
+    name: link3
     driver: bridge
     ipam: 
       driver: default
@@ -167,6 +251,7 @@ networks:
     driver_opts:
       icc: "true"
   link4:
+    name: link4
     driver: bridge
     ipam: 
       driver: default
@@ -175,6 +260,7 @@ networks:
     driver_opts:
       icc: "true"
   net1:
+    name: net1
     driver: bridge
     ipam: 
       driver: default
@@ -183,6 +269,7 @@ networks:
     driver_opts:
       icc: "true"
   net4:
+    name: net4
     driver: bridge
     ipam: 
       driver: default
