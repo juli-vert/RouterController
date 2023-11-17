@@ -18,8 +18,6 @@ x-r1: &r1
   image: julivert82/routercontroller:sdnrouter
   ports:
     - 9001:9001
-  depends_on: 
-    - controller
   env_file:
     - ./R1.env
   networks:
@@ -32,9 +30,6 @@ x-r2: &r2
   image: julivert82/routercontroller:sdnrouter
   ports: 
     - 9002:9002
-  depends_on: 
-    - controller
-    - r1
   env_file:
     - ./R2.env
   networks:
@@ -47,10 +42,6 @@ x-r3: &r3
   image: julivert82/routercontroller:sdnrouter
   ports: 
     - 9003:9003
-  depends_on:
-    - controller
-    - r1
-    - r2
   env_file:
     - ./R3.env
   networks:
@@ -63,11 +54,6 @@ x-r4: &r4
   image: julivert82/routercontroller:sdnrouter
   ports: 
     - 9004:9004
-  depends_on:
-    - controller
-    - r1
-    - r2
-    - r3
   env_file:
     - ./R4.env
   networks:
@@ -80,12 +66,6 @@ x-r5: &r5
   image: julivert82/routercontroller:sdnrouter
   ports: 
     - 9005:9005
-  depends_on:
-    - controller
-    - r1
-    - r2
-    - r3
-    - r4
   env_file:
     - ./R5.env
   networks:
@@ -98,13 +78,6 @@ x-r6: &r6
   image: julivert82/routercontroller:sdnrouter
   ports: 
     - 9006:9006
-  depends_on:
-    - controller
-    - r1
-    - r2
-    - r3
-    - r4
-    - r5
   env_file:
     - ./R6.env
   networks:
@@ -129,72 +102,96 @@ services:
     <<: *r1
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller
     profiles:
       - win
   r1_u:
     <<: *r1
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller_u
     profiles:
       - unix
   r2:
     <<: *r2
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller
     profiles:
       - win
   r2_u:
     <<: *r2
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller_u
     profiles:
       - unix
   r3:
     <<: *r3
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller
     profiles:
       - win
   r3_u:
     <<: *r3
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller_u
     profiles:
       - unix
   r4:
     <<: *r4
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller
     profiles:
       - win
   r4_u:
     <<: *r4
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller_u
     profiles:
       - unix
   r5:
     <<: *r5
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller
     profiles:
       - win
   r5_u:
     <<: *r5
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller_u
     profiles:
       - unix
   r6:
     <<: *r6
     volumes:
      - //var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller
     profiles:
       - win
   r6_u:
     <<: *r6
     volumes:
      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+     - controller_u
     profiles:
       - unix
   networker:
