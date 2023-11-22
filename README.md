@@ -22,7 +22,7 @@ interfaces are created in the same subnet.
 
 ## Demo
 
-You can run a 6 routers demo using docker using [this docker-compose](demo/docker-compose.yaml)  
+You can run a 6 routers demo using docker using [this docker-compose](demo/docker-compose.yaml) which supports 2 profiles depending of your OS: **unix** and **win**  
 Once all the containers are up and running you can access the main GUI by running the [controller](http://localhost:8089/controller)  
 The main interface will show up containing 6 routers randomly placed on the main section as shown below  
 ![Main Window](https://github.com/juli-vert/RouterController/blob/main/img/main.png?raw=true)
